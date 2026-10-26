@@ -122,7 +122,7 @@
   var $ = function (id) { return document.getElementById(id); };
   var AR = "٠١٢٣٤٥٦٧٨٩";
   function ar(n) { return String(n).replace(/\d/g, function (d) { return AR[d]; }); }
-  function fmt(x, d) { return x == null ? "—" : ar(Number(x).toFixed(d == null ? 1 : d)); }
+  function fmt(x, d) { return x == null ? "—" : ar(Number(x).toFixed(d == null ? 1 : d)).replace(".", "\u066B"); }   // فاصلة عشرية عربية: النقطة العادية تشبه الصفر ٠ في الخطوط العربية
   function esc(s) { var d = document.createElement("div"); d.textContent = String(s == null ? "" : s); return d.innerHTML; }
   var domL = {}; C.DOMAINS.forEach(function (d) { domL[d.code] = d.label; });
   function domainName(r) { return (domL[r.domain] || r.domain) + (r.domain === "other" && r.other ? ": " + r.other : ""); }
