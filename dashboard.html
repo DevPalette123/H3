@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>لوحة تحليلات الإنماء المهني</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="assets/logo.png">
+</head>
+<body>
+
+<header class="hero bar">
+  <div class="inner">
+    <div class="logo"><img src="assets/logo.png" alt="شعار المدرسة"></div>
+    <div>
+      <h1>لوحة تحليلات الإنماء المهني</h1>
+      <div class="sub">تقييم برامج الهيئة التعليمية · <span id="schoolName"></span></div>
+    </div>
+    <span class="spacer"></span>
+    <button class="btn out no-print" id="logoutBtn" type="button" hidden>خروج</button>
+  </div>
+</header>
+
+<!-- ============ الدخول ============ -->
+<section class="card login" id="loginBox">
+  <h2>دخول الإدارة</h2>
+  <p class="hint" style="margin:0">هذه الصفحة مخصصة لمن يحق له الاطلاع على النتائج.</p>
+  <form id="loginForm" autocomplete="off">
+    <input type="password" id="pw" placeholder="كلمة المرور" aria-label="كلمة المرور" required>
+    <button class="btn primary" type="submit" id="loginBtn">دخول</button>
+  </form>
+  <div id="loginMsg"></div>
+</section>
+
+<!-- ============ اللوحة ============ -->
+<main class="wide" id="dash" hidden>
+  <div class="toolbar no-print">
+    <select id="progFilter" aria-label="تصفية حسب المجال"></select>
+    <button class="btn primary small" id="refreshBtn" type="button">↻ تحديث</button>
+    <button class="btn coral small" id="csvBtn" type="button">⬇ تصدير CSV (Excel)</button>
+    <button class="btn ghost small" id="printBtn" type="button">🖨 طباعة / PDF</button>
+    <span class="spacer"></span>
+    <span class="stamp" id="stamp"></span>
+  </div>
+
+  <div id="emptyState" class="panel-card empty" hidden>
+    <h2>لا توجد تقييمات بعد</h2>
+    <p>ستظهر الإحصائيات هنا بمجرد وصول أول تقييم.</p>
+  </div>
+
+  <div id="content">
+    <div class="kpis" id="kpis"></div>
+
+    <div class="tabs no-print" id="mainTabs" role="tablist">
+      <button class="tab" role="tab" data-p="0" aria-selected="true" type="button">نظرة عامة</button>
+      <button class="tab" role="tab" data-p="1" aria-selected="false" type="button">مقارنة المجالات</button>
+      <button class="tab" role="tab" data-p="2" aria-selected="false" type="button">نتائج العبارات</button>
+      <button class="tab" role="tab" data-p="3" aria-selected="false" type="button">الملاحظات</button>
+    </div>
+
+    <div data-panel="0">
+      <section class="panel-card">
+        <h2>أبرز النتائج</h2>
+        <p class="hint">ملخص يُولَّد تلقائيًا (المتوسطات من ٥).</p>
+        <ul class="insights" id="insights"></ul>
+      </section>
+      <div class="grid2">
+        <section class="panel-card"><h2>متوسط كل محور</h2><p class="hint">من ١ إلى ٥.</p><div id="axisBars"></div></section>
+        <section class="panel-card"><h2>هل يوصين بالبرنامج؟</h2><p class="hint">حسب التصفية الحالية.</p><div id="recDonut"></div></section>
+      </div>
+      <div class="grid2">
+        <section class="panel-card"><h2>المشاركات حسب الوظيفة</h2><div id="roleDonut"></div></section>
+        <section class="panel-card"><h2>المشاركات حسب الخبرة</h2><div id="expDonut"></div></section>
+      </div>
+    </div>
+
+    <div data-panel="1" hidden>
+      <section class="panel-card">
+        <h2>مقارنة مجالات البرامج</h2>
+        <p class="hint">مرتّبة من الأعلى متوسطًا إلى الأدنى، وتشمل كل المجالات دون تأثر بالتصفية. ما له أقل من ٥ تقييمات يُقرأ بحذر.</p>
+        <div class="tbl-scroll"><table class="tbl" id="progTable"></table></div>
+      </section>
+      <section class="panel-card"><h2>المتوسط العام لكل مجال</h2><div id="progBars"></div></section>
+    </div>
+
+    <div data-panel="2" hidden>
+      <section class="panel-card">
+        <h2>توزيع الإجابات على كل عبارة</h2>
+        <div class="legend" id="legend"></div>
+        <div id="statements"></div>
+      </section>
+    </div>
+
+    <div data-panel="3" hidden>
+      <section class="panel-card">
+        <h2>الإجابات المفتوحة</h2>
+        <div class="tabs" id="openTabs" role="tablist" style="margin-top:10px"></div>
+        <div class="toolbar" style="margin:0 0 12px">
+          <input type="search" id="openSearch" placeholder="بحث في الإجابات…" aria-label="بحث">
+          <span class="stamp" id="openCount"></span>
+        </div>
+        <div class="answers" id="answers"></div>
+      </section>
+      <section class="panel-card"><h2>التقييمات عبر الأيام</h2><div class="spark" id="spark"></div><div class="spark-labels" id="sparkLabels"></div></section>
+    </div>
+  </div>
+</main>
+
+<footer class="no-print" id="footer"></footer>
+
+<script src="config.js"></script>
+<script src="analysis.js"></script>
+<script>
+(function () {
+  "use strict";
+  var C = window.SURVEY_CONFIG, A = window.SurveyAnalysis;
+  var PW_KEY = "pd_dash_pw";
+  var $ = function (id) { return document.getElementById(id); };
+  var AR = "٠١٢٣٤٥٦٧٨٩";
+  function ar(n) { return String(n).replace(/\d/g, function (d) { return AR[d]; }); }
+  function fmt(x, d) { return x == null ? "—" : ar(Number(x).toFixed(d == null ? 1 : d)); }
+  function esc(s) { var d = document.createElement("div"); d.textContent = String(s == null ? "" : s); return d.innerHTML; }
+  var domL = {}; C.DOMAINS.forEach(function (d) { domL[d.code] = d.label; });
+  function domainName(r) { return (domL[r.domain] || r.domain) + (r.domain === "other" && r.other ? ": " + r.other : ""); }
+  function pct(a, b) { return b ? Math.round(a / b * 100) : 0; }
+
+  $("schoolName").textContent = C.SCHOOL_NAME;
+  $("footer").textContent = C.PREPARED_BY + " · لوحة سرّية، لا تشاركي رابطها أو كلمة مرورها";
+
+  var state = { rows: [], res: null, openTab: 0, generated: "", program: "" };
+  var PALETTE = ["#35607a", "#7fa6b5", "#6f9a8d", "#9b8fb5", "#c9a27a", "#8aa1b1"];
+
+  /* ---------- الدخول ---------- */
+  function msg(html) { $("loginMsg").innerHTML = html ? '<div class="notice error">' + html + "</div>" : ""; }
+  function fetchResults(password) {
+    return fetch(C.SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "results", password: password }) })
+      .then(function (r) { return r.json(); });
+  }
+  function enter(rows, generated) {
+    state.rows = rows; state.generated = generated || "";
+    $("loginBox").hidden = true; $("dash").hidden = false; $("logoutBtn").hidden = false;
+    fillProgramFilter(); render();
+  }
+
+  $("loginForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    if (!C.SCRIPT_URL) { msg("لم يُربط الموقع بجدول Google Sheets بعد. أضيفي رابط السكربت في config.js."); return; }
+    var pw = $("pw").value;
+    $("loginBtn").disabled = true; $("loginBtn").textContent = "جارٍ التحقق…"; msg("");
+    fetchResults(pw).then(function (res) {
+      if (res && res.ok) { try { sessionStorage.setItem(PW_KEY, pw); } catch (x) {} enter(res.rows || [], res.generated); }
+      else if (res && res.error === "unauthorized") msg("كلمة المرور غير صحيحة.");
+      else msg("حدث خطأ غير متوقع. حاولي مرة أخرى.");
+    }).catch(function () { msg("تعذّر الاتصال بالخادم. تأكدي من الإنترنت ومن صحة رابط السكربت في config.js."); })
+      .then(function () { $("loginBtn").disabled = false; $("loginBtn").textContent = "دخول"; });
+  });
+
+  $("logoutBtn").addEventListener("click", function () {
+    try { sessionStorage.removeItem(PW_KEY); } catch (x) {}
+    window.location.reload();
+  });
+  $("refreshBtn").addEventListener("click", function () {
+    var pw = ""; try { pw = sessionStorage.getItem(PW_KEY) || ""; } catch (x) {}
+    var b = $("refreshBtn"); b.disabled = true; b.textContent = "جارٍ التحديث…";
+    fetchResults(pw).then(function (res) {
+      if (res && res.ok) { state.rows = res.rows || []; state.generated = res.generated || ""; fillProgramFilter(); render(); }
+      else { try { sessionStorage.removeItem(PW_KEY); } catch (x) {} window.location.reload(); }
+    }).catch(function () { alert("تعذّر التحديث. تأكدي من الاتصال بالإنترنت."); })
+      .then(function () { b.disabled = false; b.textContent = "↻ تحديث"; });
+  });
+  $("csvBtn").addEventListener("click", function () {
+    var blob = new Blob([A.toCSV(state.rows, C)], { type: "text/csv;charset=utf-8" });
+    var a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+    a.download = "pd-evaluation-" + new Date().toISOString().slice(0, 10) + ".csv";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+  });
+  $("printBtn").addEventListener("click", function () { window.print(); });
+
+  function fillProgramFilter() {
+    var have = {}; state.rows.filter(function (r) { return A.validRow(r, C); }).forEach(function (r) { have[r.domain] = 1; });
+    var list = C.DOMAINS.filter(function (d) { return have[d.code]; });
+    if (state.program && !have[state.program]) state.program = "";
+    $("progFilter").innerHTML = '<option value="">كل المجالات</option>' + list.map(function (d) {
+      return "<option" + (d.code === state.program ? " selected" : "") + ' value="' + esc(d.code) + '">' + esc(d.label) + "</option>";
+    }).join("");
+  }
+  $("progFilter").addEventListener("change", function () { state.program = this.value; render(); });
+
+  /* ---------- مساعدات الرسم ---------- */
+  function hbar(label, p, num, coral) {
+    return '<div class="hbar"><span>' + esc(label) + '</span><div class="track"><div class="fill' + (coral ? " coral" : "") + '" style="width:' + Math.max(0, Math.min(100, p)) + '%"></div></div><span class="num">' + num + "</span></div>";
+  }
+  function donut(items, centerNum, centerLabel) {
+    var total = items.reduce(function (s, it) { return s + it.count; }, 0);
+    var R = 44, CIRC = 2 * Math.PI * R, acc = 0, segs = "";
+    items.forEach(function (it) {
+      if (!it.count || !total) return;
+      var len = it.count / total * CIRC;
+      segs += '<circle cx="60" cy="60" r="' + R + '" fill="none" stroke="' + it.color + '" stroke-width="22" stroke-dasharray="' + len.toFixed(2) + " " + (CIRC - len).toFixed(2) +
+        '" stroke-dashoffset="' + (-acc).toFixed(2) + '" transform="rotate(-90 60 60)"><title>' + esc(it.label) + ": " + ar(it.count) + "</title></circle>";
+      acc += len;
+    });
+    var svg = '<svg viewBox="0 0 120 120" role="img" aria-label="رسم دائري"><circle cx="60" cy="60" r="' + R + '" fill="none" stroke="#e8eef2" stroke-width="22"/>' + segs +
+      '<text x="60" y="58" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4256" style="font-family:inherit">' + ar(centerNum) + "</text>" +
+      '<text x="60" y="76" text-anchor="middle" font-size="9" fill="#5f7380" style="font-family:inherit">' + esc(centerLabel) + "</text></svg>";
+    var leg = items.map(function (it) {
+      return '<div class="dl"><i style="background:' + it.color + '"></i><span>' + esc(it.label) + '</span><span class="dv">' + ar(it.count) + " (" + ar(pct(it.count, total)) + "٪)</span></div>";
+    }).join("");
+    return '<div class="donut-wrap"><div class="donut">' + svg + '</div><div class="dlegend">' + leg + "</div></div>";
+  }
+  function heat(v) {
+    if (v == null) return "background:#f1f3f8;color:#8a93a8";
+    var t = Math.max(0, Math.min(1, (v - 1) / 4));
+    var stops = [[196, 69, 45], [235, 167, 101], [236, 230, 210], [120, 185, 146], [27, 122, 75]];
+    var pos = t * 4, i = Math.min(3, Math.floor(pos)), f = pos - i;
+    var c = stops[i].map(function (s, k) { return Math.round(s + (stops[i + 1][k] - s) * f); });
+    var lum = 0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2];
+    return "background:rgb(" + c.join(",") + ");color:" + (lum < 150 ? "#fff" : "#1f2d2e");
+  }
+  var SCALE_COLORS = ["", "c1", "c2", "c3", "c4", "c5"];
+
+  /* ---------- الرسم الرئيسي ---------- */
+  function render() {
+    var res = A.compute(state.rows, C, state.program);
+    state.res = res;
+    $("stamp").innerHTML = state.generated ? 'آخر تحديث: <bdi dir="ltr">' + esc(ar(state.generated)) + "</bdi>" : "";
+    $("emptyState").hidden = res.total > 0;
+    $("content").hidden = res.total === 0;
+    if (res.total === 0) return;
+
+    var recYes = res.rec.yes || 0;
+    $("kpis").innerHTML = [
+      { v: ar(res.n), l: state.program ? "عدد التقييمات لهذا المجال" : "إجمالي التقييمات" },
+      { v: fmt(res.overallMean, 2), l: "متوسط العبارات (من ٥)", c: true },
+      { v: fmt(res.satisfaction, 2) + " ★", l: "التقييم العام (من ٥)" },
+      { v: ar(pct(recYes, res.n)) + "٪", l: "يوصين بالبرنامج", c: true },
+      { v: res.lastTime ? '<bdi dir="ltr" style="font-size:1.3rem">' + ar(String(res.lastTime).slice(5, 16)) + "</bdi>" : "—", l: "آخر تقييم" }
+    ].map(function (k) { return '<div class="kpi' + (k.c ? " c" : "") + '"><div class="v">' + k.v + '</div><div class="l">' + k.l + "</div></div>"; }).join("");
+
+    /* أبرز النتائج */
+    var ins = [];
+    if (res.top.length) {
+      var t = res.top[0], b = res.bottom[0];
+      ins.push("<li>أعلى عبارة: «" + esc(t.text) + "» بمتوسط <b>" + fmt(t.mean, 2) + "</b> (موافقة " + ar(t.agreePct) + "٪).</li>");
+      if (b && b.index !== t.index) ins.push('<li class="warn">أدنى عبارة: «' + esc(b.text) + "» بمتوسط <b>" + fmt(b.mean, 2) + "</b> (موافقة " + ar(b.agreePct) + "٪) — تستحق الانتباه.</li>");
+    }
+    var axs = res.axes.filter(function (a) { return a.mean != null; }).sort(function (x, y) { return y.mean - x.mean; });
+    if (axs.length > 1) ins.push("<li>أقوى محور: <b>" + esc(axs[0].label) + "</b> (" + fmt(axs[0].mean, 2) + ")، وأضعفها: <b>" + esc(axs[axs.length - 1].label) + "</b> (" + fmt(axs[axs.length - 1].mean, 2) + ").</li>");
+    if (!state.program && res.programs.length > 1) {
+      var bp = res.programs[0], wp = res.programs[res.programs.length - 1];
+      ins.push("<li>أعلى المجالات متوسطًا: <b>" + esc(bp.name) + "</b> (" + fmt(bp.mean, 2) + ")، وأدناها: <b>" + esc(wp.name) + "</b> (" + fmt(wp.mean, 2) + ").</li>");
+    }
+    if (res.n && pct(res.rec.no || 0, res.n) >= 20) ins.push('<li class="warn">' + ar(pct(res.rec.no, res.n)) + "٪ لا يوصين بالبرنامج.</li>");
+    if (res.n < 5) ins.push('<li class="warn">عدد التقييمات قليل (' + ar(res.n) + ") — لا تعمّمي النتائج.</li>");
+    $("insights").innerHTML = ins.join("");
+
+    $("axisBars").innerHTML = res.axes.map(function (a, i) {
+      return hbar(a.icon + " " + a.label, a.mean == null ? 0 : a.mean / 5 * 100, fmt(a.mean, 2), i % 2 === 1);
+    }).join("");
+    $("recDonut").innerHTML = donut(C.RECOMMEND.map(function (o, i) {
+      return { label: o.label, count: res.rec[o.code], color: ["#1b7a4b", "#d9a441", "#c4452d"][i % 3] };
+    }), res.n, "تقييم");
+    $("roleDonut").innerHTML = donut(C.ROLES.map(function (o, i) { return { label: o.label, count: res.roleCounts[o.code], color: PALETTE[i % PALETTE.length] }; }), res.n, "تقييم");
+    $("expDonut").innerHTML = donut(C.EXPERIENCE.map(function (o, i) { return { label: o.label, count: res.expCounts[o.code], color: PALETTE[i % PALETTE.length] }; }), res.n, "تقييم");
+
+    /* مقارنة البرامج */
+    var head = "<tr><th>مجال البرنامج</th><th>عدد التقييمات</th>" + C.AXES.map(function (a) { return "<th>" + esc(a.label) + "</th>"; }).join("") +
+      "<th>متوسط العبارات</th><th>التقييم العام</th><th>يوصين به</th></tr>";
+    $("progTable").innerHTML = head + res.programs.map(function (p, i) {
+      return "<tr" + (i === 0 ? ' class="best"' : "") + "><td>" + esc(p.name) + (p.n < 5 ? ' <span class="small-n">(عدد قليل)</span>' : "") + "</td><td>" + ar(p.n) + "</td>" +
+        p.axes.map(function (v) { return '<td><span class="cellv" style="' + heat(v) + '">' + fmt(v, 2) + "</span></td>"; }).join("") +
+        '<td><span class="cellv" style="' + heat(p.mean) + '">' + fmt(p.mean, 2) + '</span></td><td>' + fmt(p.satisfaction, 2) + "</td><td>" + ar(p.recYesPct) + "٪</td></tr>";
+    }).join("");
+    $("progBars").innerHTML = res.programs.map(function (p) { return hbar(p.name, (p.mean || 0) / 5 * 100, fmt(p.mean, 2), false); }).join("");
+
+    /* العبارات */
+    $("legend").innerHTML = C.SCALE.map(function (o) { return '<span><i class="' + SCALE_COLORS[o.value] + '"></i>' + esc(o.label) + "</span>"; }).join("");
+    $("statements").innerHTML = res.statements.map(function (s) {
+      var segs = "";
+      [5, 4, 3, 2, 1].forEach(function (v) {
+        var p = s.n ? s.counts[v] / s.n * 100 : 0;
+        if (p > 0) segs += '<div class="' + SCALE_COLORS[v] + '" style="width:' + p + '%" title="' + ar(s.counts[v]) + '">' + (p >= 9 ? ar(Math.round(p)) + "٪" : "") + "</div>";
+      });
+      return '<div class="stmt"><div class="head"><div class="t"><em>' + ar(s.index + 1) + "</em>" + esc(s.text) + '</div><div class="meta">المتوسط <b>' + fmt(s.mean, 2) + "</b> · موافقة " + ar(s.agreePct) + "٪</div></div><div class=\"stack\">" + segs + "</div></div>";
+    }).join("");
+
+    /* الملاحظات */
+    $("openTabs").innerHTML = C.OPEN_QUESTIONS.map(function (q, i) {
+      return '<button class="tab" role="tab" type="button" data-i="' + i + '" aria-selected="' + (i === state.openTab) + '">' + esc(q.short) + "</button>";
+    }).join("");
+    renderAnswers();
+
+    var days = res.perDay, mx = days.reduce(function (m, d) { return Math.max(m, d.count); }, 1);
+    $("spark").innerHTML = days.map(function (d) {
+      return '<div class="col" title="' + esc(d.day) + ": " + d.count + '" style="height:' + Math.max(6, d.count / mx * 100) + '%"><span>' + ar(d.count) + "</span></div>";
+    }).join("");
+    $("sparkLabels").innerHTML = days.length ? "<span>" + esc(days[0].day) + "</span><span>" + esc(days[days.length - 1].day) + "</span>" : "";
+  }
+
+  function renderAnswers() {
+    var q = state.openTab, term = $("openSearch").value.trim();
+    var list = state.rows.filter(function (r) { return A.validRow(r, C) && (!state.program || r.domain === state.program); }).filter(function (r) {
+      var t = (r.open && r.open[q]) || "";
+      return t && (!term || t.indexOf(term) >= 0);
+    });
+    $("openCount").textContent = ar(list.length) + " إجابة";
+    $("answers").innerHTML = list.length
+      ? list.slice().reverse().map(function (r) { return '<div class="answer">' + esc(r.open[q]) + "<small>" + esc(domainName(r)) + " · " + ar(String(r.t).slice(0, 16)) + "</small></div>"; }).join("")
+      : '<div class="empty">لا توجد إجابات مطابقة.</div>';
+  }
+
+  $("openTabs").addEventListener("click", function (e) {
+    var b = e.target.closest(".tab"); if (!b) return;
+    state.openTab = parseInt(b.getAttribute("data-i"), 10);
+    Array.prototype.forEach.call($("openTabs").children, function (t) { t.setAttribute("aria-selected", t === b ? "true" : "false"); });
+    renderAnswers();
+  });
+  $("openSearch").addEventListener("input", renderAnswers);
+  $("mainTabs").addEventListener("click", function (e) {
+    var b = e.target.closest(".tab"); if (!b) return;
+    var p = b.getAttribute("data-p");
+    Array.prototype.forEach.call($("mainTabs").children, function (t) { t.setAttribute("aria-selected", t === b ? "true" : "false"); });
+    Array.prototype.forEach.call(document.querySelectorAll("[data-panel]"), function (el) { el.hidden = el.getAttribute("data-panel") !== p; });
+  });
+
+  /* ---------- جلسة سابقة ---------- */
+  var saved = ""; try { saved = sessionStorage.getItem(PW_KEY) || ""; } catch (x) {}
+  if (saved && C.SCRIPT_URL) {
+    $("loginBox").hidden = true;
+    fetchResults(saved).then(function (res) {
+      if (res && res.ok) enter(res.rows || [], res.generated);
+      else { try { sessionStorage.removeItem(PW_KEY); } catch (x) {} $("loginBox").hidden = false; }
+    }).catch(function () { $("loginBox").hidden = false; });
+  }
+})();
+</script>
+</body>
+</html>

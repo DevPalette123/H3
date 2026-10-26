@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>تقييم برامج الإنماء المهني</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="assets/logo.png">
+</head>
+<body>
+
+<div class="page"><div class="frame">
+<header class="hero center">
+  <div class="wrap">
+    <img class="logo" src="assets/logo.png" alt="شعار المدرسة">
+    <h1>استبيان تقييم برامج الإنماء المهني</h1>
+    <p class="school" id="schoolName"></p>
+    <div class="orn"><i></i><b>◆</b><i></i></div>
+    <p class="intro">نسعى إلى تطوير برامج الإنماء المهني للهيئة التعليمية. نرجو مشاركة رأيكِ بصدق في البرنامج الذي حضرتِه؛ لا يتطلب الاستبيان كتابة الاسم، وتُستخدم الإجابات لأغراض التطوير فقط.</p>
+  </div>
+</header>
+
+<div class="progress" id="progress">
+  <div class="inner">
+    <span id="progressText"></span>
+    <div class="bar"><i id="progressBar"></i></div>
+  </div>
+</div>
+
+<main class="sheet">
+  <form id="form" novalidate autocomplete="off">
+    <div id="stage"></div>
+    <div class="hp" aria-hidden="true"><label>لا تملأ هذا الحقل <input type="text" id="hp" tabindex="-1" autocomplete="off"></label></div>
+    <div id="msg"></div>
+    <button type="button" class="btn primary" id="submitBtn" style="width:100%;font-size:1.1rem;padding:14px">إرسال التقييم</button>
+  </form>
+
+  <section class="card thanks" id="thanks" hidden>
+    <div class="big">✔</div>
+    <h2 style="justify-content:center">شكرًا لمشاركتكِ</h2>
+    <p>وصل تقييمكِ، وسيُستفاد منه في تطوير برامج الإنماء المهني القادمة.</p>
+    <p class="hint">إجاباتكِ مجهولة الهوية ولا يُطلب اسمكِ.</p>
+    <button class="btn coral" id="againBtn" type="button">تقييم برنامج آخر</button>
+  </section>
+</main>
+
+<footer id="footer"></footer>
+</div></div>
+
+<script src="config.js"></script>
+<script>
+(function () {
+  "use strict";
+  var C = window.SURVEY_CONFIG;
+  var $ = function (id) { return document.getElementById(id); };
+  var AR = "٠١٢٣٤٥٦٧٨٩";
+  function ar(n) { return String(n).replace(/\d/g, function (d) { return AR[d]; }); }
+  function esc(s) { var d = document.createElement("div"); d.textContent = String(s == null ? "" : s); return d.innerHTML; }
+
+  $("schoolName").textContent = C.SCHOOL_NAME;
+  $("footer").textContent = C.PREPARED_BY;
+
+  var stmtOffset = [], total = 0;
+  C.AXES.forEach(function (ax) { stmtOffset.push(total); total += ax.statements.length; });
+  var CAPTIONS = { 1: "ضعيف جدًا", 2: "ضعيف", 3: "متوسط", 4: "جيد", 5: "ممتاز" };
+
+  var st;
+  function reset() {
+    st = { domain: "", other: "", role: "", exp: "", q: [], overall: 0, rec: "", open: ["", "", "", ""] };
+    for (var i = 0; i < total; i++) st.q.push(0);
+  }
+  reset();
+
+  function choices(name, list, cur) {
+    return '<div class="choices">' + list.map(function (o) {
+      return '<label class="choice"><input type="radio" name="' + name + '" value="' + esc(o.code) + '"' + (cur === o.code ? " checked" : "") + "><span>" + esc(o.label) + "</span></label>";
+    }).join("") + "</div>";
+  }
+  function scale(idx) {
+    var out = '<div class="scale" role="radiogroup" aria-label="التقييم">';
+    for (var v = 5; v >= 1; v--) out += '<label><input type="radio" name="q' + idx + '" value="' + v + '"><span>' + ar(v) + "</span></label>";
+    return out + '</div><div class="scale-cap"><span>أوافق بشدة</span><span>لا أوافق بشدة</span></div>';
+  }
+  function stars() {
+    var out = '<div class="stars" role="radiogroup" aria-label="التقييم العام">';
+    for (var v = 1; v <= 5; v++) out += '<label><input type="radio" name="overall" value="' + v + '"><span>★</span></label>';
+    return out + '</div><div class="stars-cap" id="starCap">اضغطي على النجوم</div>';
+  }
+  function mhead() {
+    return '<div class="mhead"><div class="lead-cell">العبارة</div><div class="cols">' + C.SCALE.map(function (o) { return "<span><b>" + ar(o.value) + "</b>" + esc(o.label) + "</span>"; }).join("") + "</div></div>";
+  }
+  function sec(n, title, hint, body, id) {
+    return '<section class="card" data-sec="' + id + '"><h2><span class="step">' + ar(n) + "</span> " + esc(title) + "</h2>" +
+      (hint ? '<p class="hint">' + hint + "</p>" : "") + body + '<div class="errmsg">يرجى إكمال الحقول المطلوبة في هذا القسم.</div></section>';
+  }
+
+  function render() {
+    var n = 1, h = "";
+    h += sec(n++, "بيانات عامة", "حدّدي مجال البرنامج الذي تقيّمينه. لا يُطلب اسمكِ، والتقييم مجهول.",
+      '<div class="field" data-f="domain"><label for="domain">ينتمي البرنامج المُقيَّم إلى مجال <span class="req">*</span></label><select id="domain"><option value="">— اختاري المجال —</option>' +
+      C.DOMAINS.map(function (p) { return '<option value="' + esc(p.code) + '">' + esc(p.label) + "</option>"; }).join("") + "</select></div>" +
+      '<div class="field" data-f="other" hidden><label for="other">اكتبي نوع البرنامج <span class="req">*</span></label><input type="text" id="other" maxlength="120" placeholder="مثال: برنامج عن ..."></div>' +
+      '<div class="field" data-f="role"><div class="lab">الوظيفة <span class="req">*</span></div>' + choices("role", C.ROLES, "") + "</div>" +
+      '<div class="field" data-f="exp"><div class="lab">سنوات الخبرة <span class="req">*</span></div>' + choices("exp", C.EXPERIENCE, "") + "</div>", "info");
+    C.AXES.forEach(function (ax, ai) {
+      h += sec(n++, ax.label, "حدّدي مدى موافقتكِ على كل عبارة (٥ = أوافق بشدة، ١ = لا أوافق بشدة).",
+        mhead() + ax.statements.map(function (t, j) {
+          var idx = stmtOffset[ai] + j;
+          return '<div class="q" data-q="' + idx + '"><div class="txt"><span class="num">' + ar(idx + 1) + "</span>" + esc(t) + "</div>" + scale(idx) + "</div>";
+        }).join(""), "axis" + ai);
+    });
+    h += sec(n++, "التقييم العام", "بوجه عام، كيف تقيّمين هذا البرنامج؟",
+      '<div class="field" data-f="overall">' + stars() + "</div>" +
+      '<div class="field" data-f="rec"><div class="lab">هل توصين به لزميلاتكِ؟ <span class="req">*</span></div>' + choices("rec", C.RECOMMEND, "") + "</div>", "final");
+    h += sec(n++, "ملاحظاتكِ", "اختيارية، لكنها تفيدنا كثيرًا في التطوير.",
+      C.OPEN_QUESTIONS.map(function (q, i) {
+        return '<div class="field"><label for="o' + i + '">' + esc(q.label) + '</label><textarea id="o' + i + '" maxlength="500" data-o="' + i + '"></textarea></div>';
+      }).join(""), "open");
+    $("stage").innerHTML = h;
+    updateProgress();
+  }
+
+  function checked(name) { var c = document.querySelector('input[name="' + name + '"]:checked'); return c ? c.value : ""; }
+  function capture() {
+    st.domain = $("domain").value; st.other = $("other").value; st.role = checked("role"); st.exp = checked("exp");
+    for (var i = 0; i < total; i++) st.q[i] = parseInt(checked("q" + i) || "0", 10);
+    st.overall = parseInt(checked("overall") || "0", 10); st.rec = checked("rec");
+    Array.prototype.forEach.call(document.querySelectorAll("textarea[data-o]"), function (t) { st.open[+t.getAttribute("data-o")] = t.value; });
+  }
+
+  function updateProgress() {
+    capture();
+    var req = 3 + total + 2, done = 0;   // المجال، الوظيفة، الخبرة، العبارات، النجوم، التوصية
+    if (st.domain && (st.domain !== "other" || st.other.trim())) done++;
+    if (st.role) done++; if (st.exp) done++; if (st.overall) done++; if (st.rec) done++;
+    st.q.forEach(function (v) { if (v) done++; });
+    $("progressText").textContent = ar(done) + " من " + ar(req);
+    $("progressBar").style.width = (req ? done / req * 100 : 0) + "%";
+  }
+
+  function validate() {
+    capture();
+    var bad = 0, firstBad = null;
+    function mark(sel, on, host) { var el = document.querySelector(sel); if (el) el.classList.toggle("err", on); }
+    function card(id, on) { var c = document.querySelector('[data-sec="' + id + '"]'); if (c) { c.classList.toggle("invalid", on); if (on && !firstBad) firstBad = c; } if (on) bad++; }
+    var infoBad = !st.domain || !st.role || !st.exp || (st.domain === "other" && !st.other.trim());
+    mark('[data-f="domain"]', !st.domain); mark('[data-f="role"]', !st.role); mark('[data-f="exp"]', !st.exp);
+    mark('[data-f="other"]', st.domain === "other" && !st.other.trim());
+    card("info", infoBad);
+    C.AXES.forEach(function (ax, ai) {
+      var any = false;
+      ax.statements.forEach(function (t, j) { var idx = stmtOffset[ai] + j, b = !st.q[idx]; mark('[data-q="' + idx + '"]', b); if (b) any = true; });
+      card("axis" + ai, any);
+    });
+    mark('[data-f="overall"]', !st.overall); mark('[data-f="rec"]', !st.rec);
+    card("final", !st.overall || !st.rec);
+    if (bad) {
+      $("msg").innerHTML = '<div class="notice error">يرجى إكمال الأقسام المعلّمة بالأحمر قبل الإرسال.</div>';
+      if (firstBad && firstBad.scrollIntoView) firstBad.scrollIntoView({ block: "start", behavior: "smooth" });
+    } else $("msg").innerHTML = "";
+    return bad === 0;
+  }
+
+  function submit() {
+    if (!C.SCRIPT_URL) {
+      $("msg").innerHTML = '<div class="notice error">الاستبيان غير مربوط بجدول Google Sheets بعد. أضيفي رابط السكربت في config.js.</div>';
+      return;
+    }
+    var btn = $("submitBtn"); btn.disabled = true; btn.textContent = "جارٍ الإرسال…"; $("msg").innerHTML = "";
+    var payload = {
+      action: "submit", domain: st.domain, other: st.domain === "other" ? st.other.trim() : "", role: st.role, exp: st.exp, answers: st.q.slice(),
+      overall: st.overall, rec: st.rec, open: st.open.map(function (t) { return String(t).trim(); }), hp: $("hp").value
+    };
+    fetch(C.SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) })
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        if (res && res.ok) { $("form").hidden = true; $("progress").hidden = true; $("thanks").hidden = false; window.scrollTo(0, 0); }
+        else $("msg").innerHTML = '<div class="notice error">تعذّر حفظ التقييم. راجعي الإجابات وحاولي مرة أخرى.</div>';
+      })
+      .catch(function () { $("msg").innerHTML = '<div class="notice error">تعذّر الإرسال. تأكدي من الاتصال بالإنترنت وحاولي مرة أخرى؛ إجاباتكِ ما زالت محفوظة في الصفحة.</div>'; })
+      .then(function () { btn.disabled = false; btn.textContent = "إرسال التقييم"; });
+  }
+
+  $("submitBtn").addEventListener("click", function () { if (validate()) submit(); });
+  $("form").addEventListener("submit", function (e) { e.preventDefault(); });
+  $("form").addEventListener("input", updateProgress);
+  $("form").addEventListener("change", function (e) {
+    var t = e.target;
+    if (t.name === "overall") {
+      var v = parseInt(t.value, 10);
+      Array.prototype.forEach.call(document.querySelectorAll(".stars span"), function (sp, i) { sp.classList.toggle("on", i < v); });
+      $("starCap").textContent = CAPTIONS[v];
+    }
+    if (t.id === "domain") { var of = document.querySelector('[data-f="other"]'); if (of) of.hidden = t.value !== "other"; }
+    var f = t.closest(".field, .q"); if (f) f.classList.remove("err");
+    var cd = t.closest(".card"); if (cd && !cd.querySelector(".err")) cd.classList.remove("invalid");
+    updateProgress();
+  });
+  $("againBtn").addEventListener("click", function () {
+    reset(); $("thanks").hidden = true; $("form").hidden = false; $("progress").hidden = false; render(); window.scrollTo(0, 0);
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
